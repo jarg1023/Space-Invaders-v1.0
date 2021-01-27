@@ -4,8 +4,8 @@ window.addEventListener("load", function () {
 });
 
 function Game() {
-    // Variables var canvas,
-    var canvas, ctx, background, spaceship, defaultSpaceShipHeight, defaultSpaceShipWidth, lapse, keyboard;
+    // Variables
+    var canvas, ctx, background, spaceship, defaultSpaceShipHeight, defaultSpaceShipWidth, defaultSpaceShipShotHeight, defaultSpaceShipShotWidth, lapse, arraySpaceShipShots = [], keyboard;
 
     // Mètodes públics
     this.initialize = function () {
@@ -40,9 +40,11 @@ function Game() {
     }
     
     function frameLoop() {
+        moveSpaceShip();
+        moveShots();
         drawBackground();
         drawSpaceship();
-        moveSpaceShip();
+        drawSpaceShipShots();
     }
     
     function drawBackground() {
@@ -51,6 +53,13 @@ function Game() {
     
     function drawSpaceship() {
         ctx.drawImage(spaceship.image(), spaceship.x, spaceship.y);
+    }
+
+    function drawSpaceShipShots() {
+        for (var i in arraySpaceShipShots) {
+            var currentShot = arraySpaceShipShots[i];
+            ctx.drawImage(currentShot.image, currentShot.x, currentShot.y);
+        }
     }
 
     function addKeyboardEvents()
@@ -62,7 +71,6 @@ function Game() {
         addEvent(document, "keyup", function (e) {
             keyboard[e.keyCode] = false;
         });
-        
     }
 
     function addEvent(element, eventName, func) {
@@ -84,5 +92,40 @@ function Game() {
             spaceship.x += 10;
             if (spaceship.x >= (800 - spaceship.width)) spaceship.x = (800 - spaceship.width);
         }
+
+        if (keyboard[32]) {
+            fire();
+        }
+    }
+
+    function SpaceShipShot() {
+        defaultSpaceShipShotWidth = 24;
+        defaultSpaceShipShotHeight = 36;
+        this.width = defaultSpaceShipShotWidth;
+        this.height = defaultSpaceShipShotHeight;
+        this.x = spaceship.x + ((spaceship.width/2)-(defaultSpaceShipShotWidth/2)); // volem que surti del centre this.y = spaceShip.y -10;
+        this.image = new Image();
+        this.image.src = "img/goodProjectile.png";
+    }
+
+    function moveShots() {
+        for (var i in arraySpaceShipShots) {
+            var currentShot = arraySpaceShipShots[i];
+            currentShot.y -= 2;
+        }
+        /*
+        Aquesta funció de filter() serveix per esborrar elements de l'array quan han sobrepassat el canvas, és a dir, quan la coordenada y < 0
+        */
+        arraySpaceShipShots = arraySpaceShipShots.filter(function(shot) {
+            return shot.y > 0;
+        });
+    }
+
+    /*
+    Posem projectils al array de projectils arraySpaceShipShots[] per anar-los posteriorment dibuixant per pantalla.
+    */
+    function fire() {
+        var currentShot = new SpaceShipShot();
+        arraySpaceShipShots.push(currentShot);
     }
 }
