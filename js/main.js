@@ -104,6 +104,7 @@ function Game() {
         this.width = defaultSpaceShipShotWidth;
         this.height = defaultSpaceShipShotHeight;
         this.x = spaceship.x + ((spaceship.width/2)-(defaultSpaceShipShotWidth/2)); // volem que surti del centre this.y = spaceShip.y -10;
+        this.y = spaceship.y -10;
         this.image = new Image();
         this.image.src = "img/goodProjectile.png";
     }
