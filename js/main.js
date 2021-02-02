@@ -14,6 +14,7 @@ function Game() {
         addKeyboardEvents();
         backgroundInitialize();
         spaceshipInitialize();
+        enemiesInitialize();
         lapse = window.setInterval(frameLoop, 1000 / 60);
     }
 
@@ -38,6 +39,15 @@ function Game() {
             }
         }
     }
+
+    function enemiesInitialize() {
+        arrayEnemies = new Array();
+        for (var i=0;i<10;i++) {
+            var currentEnemy = new Enemy();
+            currentEnemy.x = 10 + (i*79);
+            arrayEnemies.push(currentEnemy);
+        }
+    }
     
     function frameLoop() {
         moveSpaceShip();
@@ -45,6 +55,8 @@ function Game() {
         drawBackground();
         drawSpaceship();
         drawSpaceShipShots();
+        drawEnemies();
+        checkHit();
     }
     
     function drawBackground() {
@@ -60,6 +72,12 @@ function Game() {
             var currentShot = arraySpaceShipShots[i];
             ctx.drawImage(currentShot.image, currentShot.x, currentShot.y);
         }
+    }
+
+    function drawEnemies() {
+        arrayEnemies.forEach(function(currentEnemy, i) {
+            ctx.drawImage(currentEnemy.image,currentEnemy.x,currentEnemy.y);
+        });
     }
 
     function addKeyboardEvents()
@@ -94,7 +112,12 @@ function Game() {
         }
 
         if (keyboard[32]) {
-            fire();
+            if (!keyboard.fire) {
+                fire();
+                keyboard.fire = true;
+            }
+        } else {
+            keyboard.fire = false;
         }
     }
 
@@ -107,6 +130,17 @@ function Game() {
         this.y = spaceship.y -10;
         this.image = new Image();
         this.image.src = "img/goodProjectile.png";
+    }
+
+    function Enemy() {
+        defaultEnemyWidth = 72;
+        defaultEnemyHeight = 50;
+        this.width = defaultEnemyWidth;
+        this.height = defaultEnemyHeight;
+        this.x = 0;
+        this.y = 10;
+        this.image = new Image();
+        this.image.src = "img/badGuy.png";
     }
 
     function moveShots() {
@@ -128,5 +162,53 @@ function Game() {
     function fire() {
         var currentShot = new SpaceShipShot();
         arraySpaceShipShots.push(currentShot);
+    }
+
+    function hit(a,b) {
+
+        var hit = false;
+
+        //Col·lisions horitzontals
+        if(b.x + b.width >= a.x && b.x < a.x + a.width) {
+            //Col·lisions verticals
+            if(b.y + b.height >= a.y && b.y < a.y + a.height) {
+                hit = true;
+            }
+        }
+
+        //Col·lisió de a amb b
+        if(b.x <= a.x && b.x + b.width >= a.x + a.width) {
+            if(b.y <= a.y && b.y + b.height >= a.y + a.height) {
+                hit = true;
+            }
+        }
+
+        //Col·lisió de b amb a
+        if(a.x <= b.x && a.x + a.width >= b.x + b.width) {
+            if(a.y <= b.y && a.y + a.height >= b.y + b.height) {
+                hit = true;
+            }
+        }
+
+        return hit;
+    }
+
+    function checkHit() {
+
+        // Aquesta funció verifica si dos elements han col·lisionat.
+        for(var i in arraySpaceShipShots) {
+
+            var currentShot = arraySpaceShipShots[i];
+
+            for(var j in arrayEnemies) {
+
+                var currentEnemy = arrayEnemies[j];
+
+                if (hit(currentShot, currentEnemy)) {
+                    console.log("BOOM!");
+                    arrayEnemies.splice(arrayEnemies.indexOf(currentEnemy),1);
+                }
+            }
+        }
     }
 }
