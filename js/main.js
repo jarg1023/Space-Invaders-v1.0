@@ -5,7 +5,7 @@ window.addEventListener("load", function () {
 
 function Game() {
     // Variables
-    var canvas, ctx, background, spaceship, defaultSpaceShipHeight, defaultSpaceShipWidth, defaultSpaceShipShotHeight, defaultSpaceShipShotWidth, lapse, arraySpaceShipShots = [], keyboard;
+    var canvas, ctx, background, spaceship, defaultSpaceShipHeight, defaultSpaceShipWidth, defaultSpaceShipShotHeight, defaultSpaceShipShotWidth, lapse, arraySpaceShipShots = [], arrayEnemyShots = [], keyboard;
 
     // Mètodes públics
     this.initialize = function () {
@@ -15,6 +15,7 @@ function Game() {
         backgroundInitialize();
         spaceshipInitialize();
         enemiesInitialize();
+        finalBossInitialize();
         lapse = window.setInterval(frameLoop, 1000 / 60);
     }
 
@@ -36,7 +37,8 @@ function Game() {
                 let img = new Image();
                 img.src = "img/goodGuy.png";
                 return img;
-            }
+            },
+            life: 1
         }
     }
 
@@ -48,15 +50,38 @@ function Game() {
             arrayEnemies.push(currentEnemy);
         }
     }
+
+    function finalBossInitialize() {
+        defaultFinalBossWidth = 500;
+        defaultFinalBossHeight = 325;
+        finalBoss = {
+            width: defaultFinalBossWidth,
+            height: defaultFinalBossHeight,
+            x: (canvas.width/2) - (defaultFinalBossWidth/2),
+            y: 20,
+            image: function() {
+                var img = new Image();
+                img.src = "img/finalBoss.png";
+                return img;
+            },
+            life: 25
+        }
+    }
     
     function frameLoop() {
         moveSpaceShip();
         moveShots();
+        enemyFire();
         drawBackground();
         drawSpaceship();
         drawSpaceShipShots();
+        drawEnemyShots();
         drawEnemies();
+        if (!checkEnemies()) {
+            drawFinalBoss();
+        }
         checkHit();
+        checkEnemies();
     }
     
     function drawBackground() {
@@ -64,6 +89,10 @@ function Game() {
     }
     
     function drawSpaceship() {
+
+        if (spaceship.life <= 0) {
+            return;
+        }
         ctx.drawImage(spaceship.image(), spaceship.x, spaceship.y);
     }
 
@@ -76,8 +105,21 @@ function Game() {
 
     function drawEnemies() {
         arrayEnemies.forEach(function(currentEnemy, i) {
-            ctx.drawImage(currentEnemy.image,currentEnemy.x,currentEnemy.y);
+            ctx.drawImage(currentEnemy.image, currentEnemy.x, currentEnemy.y);
         });
+    }
+
+    function drawFinalBoss() {
+        if (finalBoss.life <= 0) {
+            return;
+        }
+        ctx.drawImage(finalBoss.image(),finalBoss.x,finalBoss.y);
+    }
+
+    function drawEnemyShots() {
+        arrayEnemyShots.forEach(function (currentShot, i) {
+            ctx.drawImage(currentShot.image, currentShot.x, currentShot.y);
+        })
     }
 
     function addKeyboardEvents()
@@ -143,6 +185,17 @@ function Game() {
         this.image.src = "img/badGuy.png";
     }
 
+    function EnemyShot(enemy) {
+        defaultEnemyShotWidth = 20;
+        defaultEnemyShotHeight = 33;
+        this.width = defaultEnemyShotWidth;
+        this.height = defaultEnemyShotHeight;
+        this.x = enemy.x + ((enemy.width/2)-(defaultEnemyShotWidth/2)); // volem que surti del centre this.y = enemy.y + 30;
+        this.y = enemy.y + 30;
+        this.image = new Image();
+        this.image.src = "img/badProjectile.png";
+    }
+
     function moveShots() {
         for (var i in arraySpaceShipShots) {
             var currentShot = arraySpaceShipShots[i];
@@ -154,6 +207,17 @@ function Game() {
         arraySpaceShipShots = arraySpaceShipShots.filter(function(shot) {
             return shot.y > 0;
         });
+
+        /*********** CONTROL DEL FOC HOSTIL *************/
+        for (var i in arrayEnemyShots) {
+            var currentShot = arrayEnemyShots[i];
+            currentShot.y += 2;
+        }
+
+        arrayEnemyShots = arrayEnemyShots.filter(function(shot) {
+            return shot.y > 0;
+        });
+
     }
 
     /*
@@ -208,6 +272,51 @@ function Game() {
                     console.log("BOOM!");
                     arrayEnemies.splice(arrayEnemies.indexOf(currentEnemy),1);
                 }
+
+            }
+            if (!checkEnemies() && finalBoss.life > 0) {
+                if (hit(currentShot, finalBoss)) {
+                    finalBoss.life--;
+                    arraySpaceShipShots.splice(arraySpaceShipShots.indexOf(currentShot),1);
+                    console.log(finalBoss.life);
+                }
+            }
+        }
+
+        // Verifiquem col·lisions amb la nau
+        if(spaceship.life > 0) {
+            arrayEnemyShots.forEach(function(currentShot, i) {
+                if(hit(currentShot,spaceship)) {
+                    spaceship.life--;
+                }
+            });
+        }
+    }
+
+    function checkEnemies() {
+        if (arrayEnemies.length <= 0)
+            return false;
+        return true;
+    }
+
+    function enemyFire() {
+        
+        if (checkEnemies()) {
+            arrayEnemies.forEach(function(currentEnemy, i) {
+                // Això és la IA dels enemics
+                if (Math.floor(Math.random() * 200) == 0) {
+                    var currentShot = new EnemyShot(currentEnemy);
+                    arrayEnemyShots.push(currentShot);
+                }
+            });
+        } else {
+            if(finalBoss.life <= 0) {
+                return;
+            }
+            // IA del Final Boss
+            if (Math.floor(Math.random() * 30) == 0) {
+                var currentShot = new EnemyShot(finalBoss);
+                arrayEnemyShots.push(currentShot);
             }
         }
     }
