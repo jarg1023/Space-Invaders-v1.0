@@ -1,2 +1,2 @@
 # Space Invades
- Space Invaders game with Javascript
+ Space Invaders v1.0 game with Javascript
